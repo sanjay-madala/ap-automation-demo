@@ -65,8 +65,14 @@
     "uploading": "Processing...",
     "uploadSuccess": "Invoices uploaded successfully!",
     "filesSelected": "files selected",
-    "editExtractedData": "Edit Extracted Data",
-    "approveInvoice": "Approve for Validation"
+    "extractingData": "Extracting invoice data...",
+    "reviewInvoice": "Review Extracted Data",
+    "uploadedDocument": "Uploaded Document",
+    "aiConfidence": "AI Confidence",
+    "submitForProcessing": "Submit for Processing",
+    "addLineItem": "Add Line Item",
+    "removeItem": "Remove",
+    "backToList": "Back to Invoice List"
   },
   "status": {
     "received": "Received",

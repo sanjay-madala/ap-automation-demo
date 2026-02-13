@@ -65,8 +65,14 @@
     "uploading": "กำลังประมวลผล...",
     "uploadSuccess": "อัปโหลดใบแจ้งหนี้สำเร็จ!",
     "filesSelected": "ไฟล์ที่เลือก",
-    "editExtractedData": "แก้ไขข้อมูลที่สกัดได้",
-    "approveInvoice": "อนุมัติสำหรับการตรวจสอบ"
+    "extractingData": "กำลังสกัดข้อมูลใบแจ้งหนี้...",
+    "reviewInvoice": "ตรวจสอบข้อมูลที่สกัดได้",
+    "uploadedDocument": "เอกสารที่อัปโหลด",
+    "aiConfidence": "ความมั่นใจ AI",
+    "submitForProcessing": "ส่งเพื่อดำเนินการ",
+    "addLineItem": "เพิ่มรายการ",
+    "removeItem": "ลบ",
+    "backToList": "กลับไปรายการใบแจ้งหนี้"
   },
   "status": {
     "received": "ได้รับแล้ว",

@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, CheckCircle, Loader, XCircle, Circle, Pencil, Check, ShieldCheck } from 'lucide-react';
+import { X, CheckCircle, Loader, XCircle, Circle } from 'lucide-react';
 import StatusBadge from '../common/StatusBadge';
 import { formatCurrency, formatDate, formatDateTime } from '../../utils/formatters';
 
@@ -11,13 +11,8 @@ const stepIconMap = {
   pending: { Icon: Circle, color: 'text-gray-400', bg: 'bg-gray-100', line: 'bg-gray-200' },
 };
 
-const editableStatuses = ['received', 'extracting', 'validating', 'error'];
-const approvableStatuses = ['received', 'extracting', 'validating'];
-
-export default function InvoiceDetailModal({ invoice, onClose, isOpen, onUpdate, onApprove }) {
+export default function InvoiceDetailModal({ invoice, onClose, isOpen }) {
   const { t } = useTranslation();
-  const [isEditing, setIsEditing] = useState(false);
-  const [editData, setEditData] = useState(null);
 
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -25,83 +20,24 @@ export default function InvoiceDetailModal({ invoice, onClose, isOpen, onUpdate,
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
-      setIsEditing(false);
     }
     return () => {
       document.body.style.overflow = '';
     };
   }, [isOpen]);
 
-  // Sync edit data when invoice changes
-  useEffect(() => {
-    if (invoice) {
-      setEditData({
-        vendorName: invoice.vendorName,
-        date: invoice.date,
-        dueDate: invoice.dueDate,
-        poNumber: invoice.poNumber,
-        amount: invoice.amount,
-        lineItems: invoice.lineItems ? invoice.lineItems.map((li) => ({ ...li })) : [],
-      });
-    }
-  }, [invoice]);
+  if (!isOpen || !invoice) return null;
 
-  if (!isOpen || !invoice || !editData) return null;
-
-  const amount = isEditing ? editData.amount : invoice.amount;
-  const tax = Math.round(amount * 0.07 * 100) / 100;
-  const total = Math.round((amount + tax) * 100) / 100;
+  const tax = Math.round(invoice.amount * 0.07 * 100) / 100;
+  const total = Math.round((invoice.amount + tax) * 100) / 100;
   const confidencePct = Math.round(invoice.confidence * 100);
 
   let confidenceColor = 'text-red-600';
   if (confidencePct >= 95) confidenceColor = 'text-green-600';
   else if (confidencePct >= 90) confidenceColor = 'text-amber-600';
 
-  const lineItems = isEditing ? editData.lineItems : (invoice.lineItems || []);
+  const lineItems = invoice.lineItems || [];
   const lineItemsTotal = lineItems.reduce((sum, item) => sum + item.total, 0);
-
-  const canEdit = editableStatuses.includes(invoice.status) && onUpdate;
-  const canApprove = approvableStatuses.includes(invoice.status) && onApprove;
-
-  function handleEditField(field, value) {
-    setEditData((prev) => ({ ...prev, [field]: value }));
-  }
-
-  function handleLineItemChange(index, field, value) {
-    setEditData((prev) => {
-      const items = [...prev.lineItems];
-      items[index] = { ...items[index], [field]: value };
-      if (field === 'quantity' || field === 'unitPrice') {
-        items[index].total = Math.round(items[index].quantity * items[index].unitPrice * 100) / 100;
-      }
-      return { ...prev, lineItems: items };
-    });
-  }
-
-  function handleSave() {
-    if (onUpdate) {
-      onUpdate(invoice.id, editData);
-    }
-    setIsEditing(false);
-  }
-
-  function handleCancel() {
-    setEditData({
-      vendorName: invoice.vendorName,
-      date: invoice.date,
-      dueDate: invoice.dueDate,
-      poNumber: invoice.poNumber,
-      amount: invoice.amount,
-      lineItems: invoice.lineItems ? invoice.lineItems.map((li) => ({ ...li })) : [],
-    });
-    setIsEditing(false);
-  }
-
-  function handleApprove() {
-    if (onApprove) {
-      onApprove(invoice.id);
-    }
-  }
 
   return (
     <div
@@ -117,30 +53,14 @@ export default function InvoiceDetailModal({ invoice, onClose, isOpen, onUpdate,
           <div className="flex items-center gap-3">
             <h2 className="text-xl font-bold text-gray-900">{invoice.id}</h2>
             <StatusBadge status={invoice.status} />
-            {isEditing && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-50 text-amber-700">
-                {t('invoices.editExtractedData')}
-              </span>
-            )}
           </div>
-          <div className="flex items-center gap-2">
-            {canEdit && !isEditing && (
-              <button
-                onClick={() => setIsEditing(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-primary-700 bg-primary-50 hover:bg-primary-100 rounded-lg transition-colors"
-              >
-                <Pencil className="w-4 h-4" />
-                {t('common.edit')}
-              </button>
-            )}
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              aria-label={t('common.close')}
-            >
-              <X className="w-5 h-5 text-gray-500" />
-            </button>
-          </div>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            aria-label={t('common.close')}
+          >
+            <X className="w-5 h-5 text-gray-500" />
+          </button>
         </div>
 
         <div className="px-6 py-5 space-y-6">
@@ -152,21 +72,10 @@ export default function InvoiceDetailModal({ invoice, onClose, isOpen, onUpdate,
                 {t('invoices.details')}
               </h3>
               <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-                {isEditing ? (
-                  <>
-                    <EditRow label={t('invoices.vendor')} value={editData.vendorName} onChange={(v) => handleEditField('vendorName', v)} />
-                    <EditRow label={t('invoices.date')} value={editData.date} onChange={(v) => handleEditField('date', v)} type="date" />
-                    <EditRow label={t('invoices.dueDate')} value={editData.dueDate} onChange={(v) => handleEditField('dueDate', v)} type="date" />
-                    <EditRow label={t('invoices.poNumber')} value={editData.poNumber} onChange={(v) => handleEditField('poNumber', v)} />
-                  </>
-                ) : (
-                  <>
-                    <InfoRow label={t('invoices.vendor')} value={invoice.vendorName} />
-                    <InfoRow label={t('invoices.date')} value={formatDate(invoice.date)} />
-                    <InfoRow label={t('invoices.dueDate')} value={formatDate(invoice.dueDate)} />
-                    <InfoRow label={t('invoices.poNumber')} value={invoice.poNumber} />
-                  </>
-                )}
+                <InfoRow label={t('invoices.vendor')} value={invoice.vendorName} />
+                <InfoRow label={t('invoices.date')} value={formatDate(invoice.date)} />
+                <InfoRow label={t('invoices.dueDate')} value={formatDate(invoice.dueDate)} />
+                <InfoRow label={t('invoices.poNumber')} value={invoice.poNumber} />
                 <InfoRow
                   label={t('invoices.source')}
                   value={
@@ -198,25 +107,12 @@ export default function InvoiceDetailModal({ invoice, onClose, isOpen, onUpdate,
                 {t('invoices.amount')}
               </h3>
               <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-                {isEditing ? (
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-gray-500">{t('invoices.subtotal')}</span>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={editData.amount}
-                      onChange={(e) => handleEditField('amount', parseFloat(e.target.value) || 0)}
-                      className="w-32 text-right font-mono font-medium text-gray-900 border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    />
-                  </div>
-                ) : (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">{t('invoices.subtotal')}</span>
-                    <span className="font-mono font-medium text-gray-900">
-                      {formatCurrency(invoice.amount)}
-                    </span>
-                  </div>
-                )}
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">{t('invoices.subtotal')}</span>
+                  <span className="font-mono font-medium text-gray-900">
+                    {formatCurrency(invoice.amount)}
+                  </span>
+                </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">{t('invoices.tax')} (7%)</span>
                   <span className="font-mono font-medium text-gray-900">
@@ -304,45 +200,10 @@ export default function InvoiceDetailModal({ invoice, onClose, isOpen, onUpdate,
                   <tbody className="divide-y divide-gray-100">
                     {lineItems.map((item, index) => (
                       <tr key={index} className="hover:bg-gray-50 transition-colors">
-                        {isEditing ? (
-                          <>
-                            <td className="px-4 py-2">
-                              <input
-                                type="text"
-                                value={item.description}
-                                onChange={(e) => handleLineItemChange(index, 'description', e.target.value)}
-                                className="w-full text-sm text-gray-700 border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                              />
-                            </td>
-                            <td className="px-4 py-2">
-                              <input
-                                type="number"
-                                value={item.quantity}
-                                onChange={(e) => handleLineItemChange(index, 'quantity', parseFloat(e.target.value) || 0)}
-                                className="w-20 text-right text-sm font-mono text-gray-700 border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                              />
-                            </td>
-                            <td className="px-4 py-2">
-                              <input
-                                type="number"
-                                step="0.01"
-                                value={item.unitPrice}
-                                onChange={(e) => handleLineItemChange(index, 'unitPrice', parseFloat(e.target.value) || 0)}
-                                className="w-28 text-right text-sm font-mono text-gray-700 border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                              />
-                            </td>
-                            <td className="px-4 py-3 text-sm text-gray-900 text-right font-mono font-medium">
-                              {formatCurrency(item.total)}
-                            </td>
-                          </>
-                        ) : (
-                          <>
-                            <td className="px-4 py-3 text-sm text-gray-700">{item.description}</td>
-                            <td className="px-4 py-3 text-sm text-gray-700 text-right font-mono">{item.quantity}</td>
-                            <td className="px-4 py-3 text-sm text-gray-700 text-right font-mono">{formatCurrency(item.unitPrice)}</td>
-                            <td className="px-4 py-3 text-sm text-gray-900 text-right font-mono font-medium">{formatCurrency(item.total)}</td>
-                          </>
-                        )}
+                        <td className="px-4 py-3 text-sm text-gray-700">{item.description}</td>
+                        <td className="px-4 py-3 text-sm text-gray-700 text-right font-mono">{item.quantity}</td>
+                        <td className="px-4 py-3 text-sm text-gray-700 text-right font-mono">{formatCurrency(item.unitPrice)}</td>
+                        <td className="px-4 py-3 text-sm text-gray-900 text-right font-mono font-medium">{formatCurrency(item.total)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -363,44 +224,13 @@ export default function InvoiceDetailModal({ invoice, onClose, isOpen, onUpdate,
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-gray-200 flex justify-between sticky bottom-0 bg-white rounded-b-2xl">
-          <div>
-            {canApprove && !isEditing && (
-              <button
-                onClick={handleApprove}
-                className="inline-flex items-center gap-1.5 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors"
-              >
-                <ShieldCheck className="w-4 h-4" />
-                {t('invoices.approveInvoice')}
-              </button>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            {isEditing ? (
-              <>
-                <button
-                  onClick={handleCancel}
-                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition-colors"
-                >
-                  {t('common.cancel')}
-                </button>
-                <button
-                  onClick={handleSave}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg transition-colors"
-                >
-                  <Check className="w-4 h-4" />
-                  {t('common.save')}
-                </button>
-              </>
-            ) : (
-              <button
-                onClick={onClose}
-                className="px-5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition-colors"
-              >
-                {t('common.close')}
-              </button>
-            )}
-          </div>
+        <div className="px-6 py-4 border-t border-gray-200 flex justify-end sticky bottom-0 bg-white rounded-b-2xl">
+          <button
+            onClick={onClose}
+            className="px-5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition-colors"
+          >
+            {t('common.close')}
+          </button>
         </div>
       </div>
 
@@ -430,20 +260,6 @@ function InfoRow({ label, value }) {
     <div className="flex justify-between items-center text-sm">
       <span className="text-gray-500">{label}</span>
       <span className="text-gray-900 font-medium">{value}</span>
-    </div>
-  );
-}
-
-function EditRow({ label, value, onChange, type = 'text' }) {
-  return (
-    <div className="flex justify-between items-center text-sm">
-      <span className="text-gray-500">{label}</span>
-      <input
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-48 text-right text-gray-900 font-medium border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-      />
     </div>
   );
 }

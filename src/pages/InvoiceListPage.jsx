@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import {
@@ -7,16 +7,16 @@ import {
   ChevronDown,
   ChevronUp,
   FileUp,
-  CheckCircle2,
   Loader2,
   X,
 } from 'lucide-react';
-import { invoices as initialInvoices, vendors } from '../data/mockData';
+import { invoices as initialInvoices, vendors, generateLineItems } from '../data/mockData';
 import StatusBadge from '../components/common/StatusBadge';
 import DataTable from '../components/common/DataTable';
 import useInvoiceFilters from '../hooks/useInvoiceFilters';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import InvoiceDetailModal from '../components/invoices/InvoiceDetailModal';
+import InvoiceReviewScreen from '../components/invoices/InvoiceReviewScreen';
 
 const statusOptions = [
   'received',
@@ -37,10 +37,13 @@ export default function InvoiceListPage() {
   // Upload state
   const [showUpload, setShowUpload] = useState(false);
   const [uploadFiles, setUploadFiles] = useState([]);
-  const [uploadState, setUploadState] = useState('idle'); // idle | uploading | success
+  const [uploadState, setUploadState] = useState('idle'); // idle | extracting
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef(null);
+
+  // Review state — when set, the review screen replaces the list
+  const [reviewInvoice, setReviewInvoice] = useState(null);
 
   const {
     filteredInvoices,
@@ -65,29 +68,6 @@ export default function InvoiceListPage() {
       setSearchParams({}, { replace: true });
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Callbacks for InvoiceDetailModal
-  const handleUpdate = useCallback((invoiceId, editData) => {
-    setInvoiceList((prev) =>
-      prev.map((inv) =>
-        inv.id === invoiceId ? { ...inv, ...editData } : inv
-      )
-    );
-    setSelectedInvoice((prev) =>
-      prev && prev.id === invoiceId ? { ...prev, ...editData } : prev
-    );
-  }, []);
-
-  const handleApprove = useCallback((invoiceId) => {
-    setInvoiceList((prev) =>
-      prev.map((inv) =>
-        inv.id === invoiceId ? { ...inv, status: 'approved' } : inv
-      )
-    );
-    setSelectedInvoice((prev) =>
-      prev && prev.id === invoiceId ? { ...prev, status: 'approved' } : prev
-    );
-  }, []);
 
   // Upload handlers
   const handleFiles = (files) => {
@@ -116,62 +96,87 @@ export default function InvoiceListPage() {
     handleFiles(e.dataTransfer.files);
   };
 
-  const simulateUpload = () => {
-    setUploadState('uploading');
+  const simulateExtraction = () => {
+    setUploadState('extracting');
     setUploadProgress(0);
 
     const interval = setInterval(() => {
       setUploadProgress((prev) => {
         if (prev >= 100) {
           clearInterval(interval);
-          setUploadState('success');
 
-          // Add new invoices to the list
-          const newInvoices = uploadFiles.map((file, idx) => {
-            const randomVendor =
-              vendors[Math.floor(Math.random() * vendors.length)];
-            const now = new Date();
-            const id = `INV-${String(invoiceList.length + idx + 1).padStart(3, '0')}`;
-            return {
-              id,
-              vendorId: randomVendor.id,
-              vendorName: randomVendor.name,
-              amount: Math.round(Math.random() * 50000 + 1000),
-              date: now.toISOString().split('T')[0],
-              dueDate: new Date(now.getTime() + 30 * 86400000)
-                .toISOString()
-                .split('T')[0],
-              status: 'received',
-              source: 'portal',
-              poNumber: `PO-${10000 + Math.floor(Math.random() * 90000)}`,
-              confidence: 0,
-              fileName: file.name,
-              lineItems: [],
-              processingSteps: [
-                {
-                  step: 'Ingestion',
-                  status: 'completed',
-                  timestamp: now.toISOString(),
-                },
-              ],
-            };
-          });
+          // Generate a mock invoice with realistic data
+          const randomVendor = vendors[Math.floor(Math.random() * vendors.length)];
+          const amount = Math.round(Math.random() * 50000 + 1000);
+          const now = new Date();
+          const id = `INV-${String(invoiceList.length + 1).padStart(3, '0')}`;
+          const lineItems = generateLineItems(randomVendor.id, amount);
 
-          setInvoiceList((prev) => [...newInvoices, ...prev]);
+          const newInvoice = {
+            id,
+            vendorId: randomVendor.id,
+            vendorName: randomVendor.name,
+            vendorAddress: randomVendor.address,
+            paymentTerms: randomVendor.paymentTerms,
+            amount,
+            date: now.toISOString().split('T')[0],
+            dueDate: new Date(now.getTime() + 30 * 86400000)
+              .toISOString()
+              .split('T')[0],
+            status: 'received',
+            source: 'portal',
+            poNumber: `PO-${10000 + Math.floor(Math.random() * 90000)}`,
+            confidence: 0.88 + Math.random() * 0.11, // 88-99%
+            lineItems,
+            processingSteps: [
+              {
+                step: 'Ingestion',
+                status: 'completed',
+                timestamp: now.toISOString(),
+                details: 'Document uploaded and ingested',
+              },
+              {
+                step: 'Extraction',
+                status: 'completed',
+                timestamp: new Date(now.getTime() + 3000).toISOString(),
+                details: 'AI data extraction completed',
+              },
+            ],
+          };
 
-          // Reset after a short delay
-          setTimeout(() => {
-            setUploadFiles([]);
-            setUploadState('idle');
-            setUploadProgress(0);
-          }, 2000);
+          setReviewInvoice(newInvoice);
+          setUploadState('idle');
+          setUploadProgress(0);
+          setUploadFiles([]);
+          setShowUpload(false);
 
           return 100;
         }
-        return Math.min(prev + Math.random() * 15 + 5, 100);
+        return Math.min(prev + Math.random() * 12 + 4, 100);
       });
     }, 200);
   };
+
+  // Review screen callbacks
+  const handleReviewSubmit = (finalInvoice) => {
+    setInvoiceList((prev) => [finalInvoice, ...prev]);
+    setReviewInvoice(null);
+  };
+
+  const handleReviewCancel = () => {
+    setReviewInvoice(null);
+  };
+
+  // If reviewing, show the review screen instead of the list
+  if (reviewInvoice) {
+    return (
+      <InvoiceReviewScreen
+        invoice={reviewInvoice}
+        onSubmit={handleReviewSubmit}
+        onCancel={handleReviewCancel}
+      />
+    );
+  }
 
   const columns = [
     {
@@ -265,18 +270,14 @@ export default function InvoiceListPage() {
       {/* Upload Panel */}
       {showUpload && (
         <div className="bg-white border border-gray-200 rounded-xl p-6 mb-6 shadow-sm">
-          {uploadState === 'success' ? (
-            <div className="flex flex-col items-center py-4">
-              <CheckCircle2 className="w-12 h-12 text-green-500 mb-3" />
-              <p className="text-green-700 font-medium">
-                {t('invoices.uploadSuccess')}
-              </p>
-            </div>
-          ) : uploadState === 'uploading' ? (
-            <div className="flex flex-col items-center py-4">
+          {uploadState === 'extracting' ? (
+            <div className="flex flex-col items-center py-6">
               <Loader2 className="w-10 h-10 text-primary-600 animate-spin mb-3" />
-              <p className="text-gray-600 font-medium mb-3">
-                {t('invoices.uploading')}
+              <p className="text-gray-700 font-medium mb-1">
+                {t('invoices.extractingData')}
+              </p>
+              <p className="text-gray-400 text-xs mb-4">
+                AI is reading and extracting invoice data...
               </p>
               <div className="w-full max-w-md bg-gray-200 rounded-full h-2">
                 <div
@@ -352,7 +353,7 @@ export default function InvoiceListPage() {
                     ))}
                   </div>
                   <button
-                    onClick={simulateUpload}
+                    onClick={simulateExtraction}
                     className="mt-3 px-5 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors"
                   >
                     <Upload className="w-4 h-4 inline mr-1.5 -mt-0.5" />
@@ -439,13 +440,11 @@ export default function InvoiceListPage() {
         emptyMessage={t('invoices.noResults')}
       />
 
-      {/* Invoice Detail Modal */}
+      {/* Invoice Detail Modal (read-only) */}
       <InvoiceDetailModal
         invoice={selectedInvoice}
         isOpen={!!selectedInvoice}
         onClose={() => setSelectedInvoice(null)}
-        onUpdate={handleUpdate}
-        onApprove={handleApprove}
       />
     </div>
   );

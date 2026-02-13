@@ -320,7 +320,7 @@ const lineItemTemplates = {
   ],
 };
 
-function generateLineItems(vendorId, totalAmount) {
+export function generateLineItems(vendorId, totalAmount) {
   const templates = lineItemTemplates[vendorId] || lineItemTemplates['V001'];
   const items = [];
   let remaining = totalAmount;
