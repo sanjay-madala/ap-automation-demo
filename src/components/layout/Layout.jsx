@@ -6,7 +6,6 @@ import Header from './Header';
 const routeTitles = {
   '/': 'dashboard.title',
   '/invoices': 'invoices.title',
-  '/vendor-portal': 'vendorPortal.title',
   '/email-bot': 'emailBot.title',
   '/settings': 'settings.title',
 };

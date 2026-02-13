@@ -599,6 +599,14 @@ export const emailInbox = [
   },
 ];
 
+// Enrich emails with line items from linked invoices
+emailInbox.forEach((email) => {
+  const inv = invoices.find((i) => i.id === email.invoiceId);
+  if (inv && inv.lineItems) {
+    email.extractedData.lineItems = inv.lineItems;
+  }
+});
+
 // ---------------------------------------------------------------------------
 // RECENT ACTIVITY — 10 items
 // ---------------------------------------------------------------------------

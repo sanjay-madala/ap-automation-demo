@@ -6,7 +6,6 @@ import Layout from './components/layout/Layout';
 // Lazy-loaded page components
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const InvoiceListPage = lazy(() => import('./pages/InvoiceListPage'));
-const VendorPortalPage = lazy(() => import('./pages/VendorPortalPage'));
 const EmailBotPage = lazy(() => import('./pages/EmailBotPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 
@@ -37,14 +36,6 @@ export default function App() {
             element={
               <Suspense fallback={<PageLoader />}>
                 <InvoiceListPage />
-              </Suspense>
-            }
-          />
-          <Route
-            path="/vendor-portal"
-            element={
-              <Suspense fallback={<PageLoader />}>
-                <VendorPortalPage />
               </Suspense>
             }
           />

@@ -57,7 +57,16 @@
     "tax": "ภาษี",
     "totalAmount": "จำนวนเงินรวม",
     "confidence": "ความมั่นใจ AI",
-    "noResults": "ไม่พบใบแจ้งหนี้ที่ตรงกับเกณฑ์ของคุณ"
+    "noResults": "ไม่พบใบแจ้งหนี้ที่ตรงกับเกณฑ์ของคุณ",
+    "uploadInvoices": "อัปโหลดใบแจ้งหนี้",
+    "dragDrop": "ลากและวางไฟล์ใบแจ้งหนี้ที่นี่",
+    "orBrowse": "หรือคลิกเพื่อเลือกไฟล์",
+    "supportedFormats": "รองรับ: PDF, PNG, JPG (สูงสุด 10MB)",
+    "uploading": "กำลังประมวลผล...",
+    "uploadSuccess": "อัปโหลดใบแจ้งหนี้สำเร็จ!",
+    "filesSelected": "ไฟล์ที่เลือก",
+    "editExtractedData": "แก้ไขข้อมูลที่สกัดได้",
+    "approveInvoice": "อนุมัติสำหรับการตรวจสอบ"
   },
   "status": {
     "received": "ได้รับแล้ว",
@@ -110,7 +119,9 @@
     "manualReview": "ต้องตรวจสอบด้วยตนเอง",
     "confidenceScore": "คะแนนความมั่นใจ",
     "extractedFields": "ฟิลด์ที่สกัดได้",
-    "emailDetails": "รายละเอียดอีเมล"
+    "emailDetails": "รายละเอียดอีเมล",
+    "lineItems": "รายการที่สกัดได้",
+    "viewInvoice": "ดูบันทึกใบแจ้งหนี้"
   },
   "settings": {
     "title": "การตั้งค่า",
@@ -147,6 +158,8 @@
     "save": "บันทึก",
     "export": "ส่งออก",
     "refresh": "รีเฟรช",
+    "edit": "แก้ไข",
+    "approve": "อนุมัติ",
     "viewDetails": "ดูรายละเอียด",
     "back": "กลับ",
     "next": "ถัดไป",

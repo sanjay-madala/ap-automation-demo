@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import {
   Mail,
   Inbox,
@@ -11,6 +12,7 @@ import {
   Clock,
   Send,
   Sparkles,
+  ExternalLink,
 } from 'lucide-react';
 import { emailInbox } from '../data/mockData';
 import StatusBadge from '../components/common/StatusBadge';
@@ -63,6 +65,7 @@ function getConfidenceColor(score) {
 
 export default function EmailBotPage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [selectedEmail, setSelectedEmail] = useState(emailInbox[0]);
 
   const totalEmails = emailInbox.length;
@@ -190,17 +193,28 @@ export default function EmailBotPage() {
                   <span>{formatDateTime(selectedEmail.receivedAt)}</span>
                 </div>
               </div>
-              <StatusBadge
-                status={
-                  selectedEmail.status === 'needs-review'
-                    ? 'needsReview'
-                    : selectedEmail.status === 'processed'
-                    ? 'posted'
-                    : selectedEmail.status === 'processing'
-                    ? 'extracting'
-                    : selectedEmail.status
-                }
-              />
+              <div className="flex items-center gap-3">
+                <StatusBadge
+                  status={
+                    selectedEmail.status === 'needs-review'
+                      ? 'needsReview'
+                      : selectedEmail.status === 'processed'
+                      ? 'posted'
+                      : selectedEmail.status === 'processing'
+                      ? 'extracting'
+                      : selectedEmail.status
+                  }
+                />
+                {selectedEmail.invoiceId && (
+                  <button
+                    onClick={() => navigate(`/invoices?highlight=${selectedEmail.invoiceId}`)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary-50 text-primary-700 text-xs font-medium rounded-lg hover:bg-primary-100 transition-colors"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    {t('emailBot.viewInvoice')}
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Attachments */}
@@ -335,6 +349,55 @@ export default function EmailBotPage() {
                 </p>
               </div>
             </div>
+
+            {/* Extracted Line Items */}
+            {selectedEmail.extractedData.lineItems && selectedEmail.extractedData.lineItems.length > 0 && (
+              <div className="mt-6">
+                <h4 className="text-sm font-semibold text-gray-700 mb-3">
+                  {t('emailBot.lineItems')}
+                </h4>
+                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="bg-gray-50 border-b border-gray-200">
+                        <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                          {t('invoices.description')}
+                        </th>
+                        <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                          {t('invoices.quantity')}
+                        </th>
+                        <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                          {t('invoices.unitPrice')}
+                        </th>
+                        <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                          {t('invoices.total')}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {selectedEmail.extractedData.lineItems.map((item, idx) => (
+                        <tr key={idx} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-4 py-2.5 text-sm text-gray-700">{item.description}</td>
+                          <td className="px-4 py-2.5 text-sm text-gray-700 text-right font-mono">{item.quantity}</td>
+                          <td className="px-4 py-2.5 text-sm text-gray-700 text-right font-mono">{formatCurrency(item.unitPrice)}</td>
+                          <td className="px-4 py-2.5 text-sm text-gray-900 text-right font-mono font-medium">{formatCurrency(item.total)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr className="bg-gray-50 border-t border-gray-200">
+                        <td colSpan={3} className="px-4 py-2.5 text-sm font-semibold text-gray-700 text-right">
+                          {t('invoices.total')}
+                        </td>
+                        <td className="px-4 py-2.5 text-sm font-bold text-gray-900 text-right font-mono">
+                          {formatCurrency(selectedEmail.extractedData.lineItems.reduce((s, i) => s + i.total, 0))}
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

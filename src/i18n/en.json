@@ -57,7 +57,16 @@
     "tax": "Tax",
     "totalAmount": "Total Amount",
     "confidence": "AI Confidence",
-    "noResults": "No invoices found matching your criteria"
+    "noResults": "No invoices found matching your criteria",
+    "uploadInvoices": "Upload Invoices",
+    "dragDrop": "Drag & drop invoice files here",
+    "orBrowse": "or click to browse files",
+    "supportedFormats": "Supported: PDF, PNG, JPG (Max 10MB)",
+    "uploading": "Processing...",
+    "uploadSuccess": "Invoices uploaded successfully!",
+    "filesSelected": "files selected",
+    "editExtractedData": "Edit Extracted Data",
+    "approveInvoice": "Approve for Validation"
   },
   "status": {
     "received": "Received",
@@ -110,7 +119,9 @@
     "manualReview": "Manual Review Required",
     "confidenceScore": "Confidence Score",
     "extractedFields": "Extracted Fields",
-    "emailDetails": "Email Details"
+    "emailDetails": "Email Details",
+    "lineItems": "Extracted Line Items",
+    "viewInvoice": "View Invoice Record"
   },
   "settings": {
     "title": "Settings",
@@ -147,6 +158,8 @@
     "save": "Save",
     "export": "Export",
     "refresh": "Refresh",
+    "edit": "Edit",
+    "approve": "Approve",
     "viewDetails": "View Details",
     "back": "Back",
     "next": "Next",

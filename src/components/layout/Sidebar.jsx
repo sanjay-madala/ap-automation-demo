@@ -3,7 +3,6 @@ import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard,
   FileText,
-  Building2,
   Mail,
   Settings,
 } from 'lucide-react';
@@ -11,7 +10,6 @@ import {
 const navItems = [
   { to: '/', icon: LayoutDashboard, labelKey: 'nav.dashboard' },
   { to: '/invoices', icon: FileText, labelKey: 'nav.invoices' },
-  { to: '/vendor-portal', icon: Building2, labelKey: 'nav.vendorPortal' },
   { to: '/email-bot', icon: Mail, labelKey: 'nav.emailBot' },
   { to: '/settings', icon: Settings, labelKey: 'nav.settings' },
 ];
