@@ -320,8 +320,23 @@ const lineItemTemplates = {
   ],
 };
 
+// WHT rates by vendor ID (common Thai WHT rates)
+const vendorWhtRates = {
+  V001: 3, // Office Supplies — service/goods
+  V002: 3, // IT Services
+  V003: 1, // Raw Materials — goods
+  V004: 3, // Manufacturing — service
+  V005: 1, // Raw Materials — goods
+  V006: 3, // Manufacturing — service
+  V007: 3, // Office Supplies — service/goods
+  V008: 3, // Logistics — service
+  V009: 3, // Energy — service
+  V010: 1, // Chemicals — goods
+};
+
 export function generateLineItems(vendorId, totalAmount) {
   const templates = lineItemTemplates[vendorId] || lineItemTemplates['V001'];
+  const whtRate = vendorWhtRates[vendorId] || 3;
   const items = [];
   let remaining = totalAmount;
   const count = 2 + Math.floor(Math.random() * 3); // 2 to 4 line items
@@ -337,18 +352,24 @@ export function generateLineItems(vendorId, totalAmount) {
       // Adjust last item to make totals match
       const adjustedQuantity = Math.max(1, Math.round(remaining / template.unitPrice));
       const adjustedTotal = Math.round(adjustedQuantity * template.unitPrice * 100) / 100;
+      const whtAmount = Math.round(adjustedTotal * whtRate / 100 * 100) / 100;
       items.push({
         description: template.description,
         quantity: adjustedQuantity,
         unitPrice: template.unitPrice,
         total: adjustedTotal,
+        whtRate,
+        whtAmount,
       });
     } else {
+      const whtAmount = Math.round(lineTotal * whtRate / 100 * 100) / 100;
       items.push({
         description: template.description,
         quantity,
         unitPrice: template.unitPrice,
         total: lineTotal,
+        whtRate,
+        whtAmount,
       });
       remaining -= lineTotal;
     }

@@ -159,12 +159,27 @@ export default function InvoiceListPage() {
 
   // Review screen callbacks
   const handleReviewSubmit = (finalInvoice) => {
-    setInvoiceList((prev) => [finalInvoice, ...prev]);
+    setInvoiceList((prev) => {
+      const existingIndex = prev.findIndex((inv) => inv.id === finalInvoice.id);
+      if (existingIndex !== -1) {
+        // Resubmit: replace existing invoice, reset status to "received"
+        const updated = [...prev];
+        updated[existingIndex] = { ...finalInvoice, status: 'received' };
+        return updated;
+      }
+      return [finalInvoice, ...prev];
+    });
     setReviewInvoice(null);
   };
 
   const handleReviewCancel = () => {
     setReviewInvoice(null);
+  };
+
+  // Error invoice review handler
+  const handleReviewErrorInvoice = (invoice) => {
+    setSelectedInvoice(null);
+    setReviewInvoice(invoice);
   };
 
   // If reviewing, show the review screen instead of the list
@@ -445,6 +460,7 @@ export default function InvoiceListPage() {
         invoice={selectedInvoice}
         isOpen={!!selectedInvoice}
         onClose={() => setSelectedInvoice(null)}
+        onReview={handleReviewErrorInvoice}
       />
     </div>
   );

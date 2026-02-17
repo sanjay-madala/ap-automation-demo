@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, CheckCircle, Loader, XCircle, Circle } from 'lucide-react';
+import { X, CheckCircle, Loader, XCircle, Circle, RefreshCw } from 'lucide-react';
 import StatusBadge from '../common/StatusBadge';
 import { formatCurrency, formatDate, formatDateTime } from '../../utils/formatters';
 
@@ -11,7 +11,7 @@ const stepIconMap = {
   pending: { Icon: Circle, color: 'text-gray-400', bg: 'bg-gray-100', line: 'bg-gray-200' },
 };
 
-export default function InvoiceDetailModal({ invoice, onClose, isOpen }) {
+export default function InvoiceDetailModal({ invoice, onClose, isOpen, onReview }) {
   const { t } = useTranslation();
 
   // Lock body scroll when modal is open
@@ -28,16 +28,16 @@ export default function InvoiceDetailModal({ invoice, onClose, isOpen }) {
 
   if (!isOpen || !invoice) return null;
 
+  const lineItems = invoice.lineItems || [];
+  const lineItemsTotal = lineItems.reduce((sum, item) => sum + item.total, 0);
+  const whtTotal = lineItems.reduce((sum, item) => sum + (item.whtAmount || 0), 0);
   const tax = Math.round(invoice.amount * 0.07 * 100) / 100;
-  const total = Math.round((invoice.amount + tax) * 100) / 100;
+  const total = Math.round((invoice.amount + tax - whtTotal) * 100) / 100;
   const confidencePct = Math.round(invoice.confidence * 100);
 
   let confidenceColor = 'text-red-600';
   if (confidencePct >= 95) confidenceColor = 'text-green-600';
   else if (confidencePct >= 90) confidenceColor = 'text-amber-600';
-
-  const lineItems = invoice.lineItems || [];
-  const lineItemsTotal = lineItems.reduce((sum, item) => sum + item.total, 0);
 
   return (
     <div
@@ -119,6 +119,14 @@ export default function InvoiceDetailModal({ invoice, onClose, isOpen }) {
                     {formatCurrency(tax)}
                   </span>
                 </div>
+                {whtTotal > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">{t('invoices.whtTotal')}</span>
+                    <span className="font-mono font-medium text-red-600">
+                      -{formatCurrency(whtTotal)}
+                    </span>
+                  </div>
+                )}
                 <div className="border-t border-gray-200 pt-3 flex justify-between">
                   <span className="text-sm font-semibold text-gray-700">
                     {t('invoices.totalAmount')}
@@ -195,6 +203,12 @@ export default function InvoiceDetailModal({ invoice, onClose, isOpen }) {
                       <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
                         {t('invoices.total')}
                       </th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        {t('invoices.whtRate')}
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        {t('invoices.whtAmount')}
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
@@ -204,6 +218,8 @@ export default function InvoiceDetailModal({ invoice, onClose, isOpen }) {
                         <td className="px-4 py-3 text-sm text-gray-700 text-right font-mono">{item.quantity}</td>
                         <td className="px-4 py-3 text-sm text-gray-700 text-right font-mono">{formatCurrency(item.unitPrice)}</td>
                         <td className="px-4 py-3 text-sm text-gray-900 text-right font-mono font-medium">{formatCurrency(item.total)}</td>
+                        <td className="px-4 py-3 text-sm text-gray-700 text-right font-mono">{item.whtRate != null ? `${item.whtRate}%` : '-'}</td>
+                        <td className="px-4 py-3 text-sm text-red-600 text-right font-mono">{item.whtAmount ? formatCurrency(item.whtAmount) : '-'}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -215,6 +231,12 @@ export default function InvoiceDetailModal({ invoice, onClose, isOpen }) {
                       <td className="px-4 py-3 text-sm font-bold text-gray-900 text-right font-mono">
                         {formatCurrency(lineItemsTotal)}
                       </td>
+                      <td className="px-4 py-3 text-sm font-semibold text-gray-700 text-right">
+                        {t('invoices.whtTotal')}
+                      </td>
+                      <td className="px-4 py-3 text-sm font-bold text-red-600 text-right font-mono">
+                        {formatCurrency(whtTotal)}
+                      </td>
                     </tr>
                   </tfoot>
                 </table>
@@ -224,7 +246,18 @@ export default function InvoiceDetailModal({ invoice, onClose, isOpen }) {
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-gray-200 flex justify-end sticky bottom-0 bg-white rounded-b-2xl">
+        <div className="px-6 py-4 border-t border-gray-200 flex justify-between sticky bottom-0 bg-white rounded-b-2xl">
+          <div>
+            {invoice.status === 'error' && onReview && (
+              <button
+                onClick={() => onReview(invoice)}
+                className="inline-flex items-center gap-2 px-5 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium rounded-lg transition-colors"
+              >
+                <RefreshCw className="w-4 h-4" />
+                {t('invoices.reviewAndResubmit')}
+              </button>
+            )}
+          </div>
           <button
             onClick={onClose}
             className="px-5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition-colors"

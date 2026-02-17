@@ -372,6 +372,12 @@ export default function EmailBotPage() {
                         <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
                           {t('invoices.total')}
                         </th>
+                        <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                          {t('invoices.whtRate')}
+                        </th>
+                        <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                          {t('invoices.whtAmount')}
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
@@ -381,6 +387,8 @@ export default function EmailBotPage() {
                           <td className="px-4 py-2.5 text-sm text-gray-700 text-right font-mono">{item.quantity}</td>
                           <td className="px-4 py-2.5 text-sm text-gray-700 text-right font-mono">{formatCurrency(item.unitPrice)}</td>
                           <td className="px-4 py-2.5 text-sm text-gray-900 text-right font-mono font-medium">{formatCurrency(item.total)}</td>
+                          <td className="px-4 py-2.5 text-sm text-gray-700 text-right font-mono">{item.whtRate != null ? `${item.whtRate}%` : '-'}</td>
+                          <td className="px-4 py-2.5 text-sm text-red-600 text-right font-mono">{item.whtAmount ? formatCurrency(item.whtAmount) : '-'}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -391,6 +399,12 @@ export default function EmailBotPage() {
                         </td>
                         <td className="px-4 py-2.5 text-sm font-bold text-gray-900 text-right font-mono">
                           {formatCurrency(selectedEmail.extractedData.lineItems.reduce((s, i) => s + i.total, 0))}
+                        </td>
+                        <td className="px-4 py-2.5 text-sm font-semibold text-gray-700 text-right">
+                          {t('invoices.whtTotal')}
+                        </td>
+                        <td className="px-4 py-2.5 text-sm font-bold text-red-600 text-right font-mono">
+                          {formatCurrency(selectedEmail.extractedData.lineItems.reduce((s, i) => s + (i.whtAmount || 0), 0))}
                         </td>
                       </tr>
                     </tfoot>

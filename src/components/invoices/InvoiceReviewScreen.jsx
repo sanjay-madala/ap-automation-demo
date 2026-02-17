@@ -30,6 +30,10 @@ export default function InvoiceReviewScreen({ invoice, onSubmit, onCancel }) {
         items[index].total =
           Math.round(items[index].quantity * items[index].unitPrice * 100) / 100;
       }
+      if (field === 'quantity' || field === 'unitPrice' || field === 'whtRate') {
+        const rate = items[index].whtRate || 0;
+        items[index].whtAmount = Math.round(items[index].total * rate / 100 * 100) / 100;
+      }
       return { ...prev, lineItems: items };
     });
   }
@@ -39,7 +43,7 @@ export default function InvoiceReviewScreen({ invoice, onSubmit, onCancel }) {
       ...prev,
       lineItems: [
         ...prev.lineItems,
-        { description: '', quantity: 1, unitPrice: 0, total: 0 },
+        { description: '', quantity: 1, unitPrice: 0, total: 0, whtRate: 3, whtAmount: 0 },
       ],
     }));
   }
@@ -53,7 +57,8 @@ export default function InvoiceReviewScreen({ invoice, onSubmit, onCancel }) {
 
   const lineItemsTotal = formData.lineItems.reduce((sum, li) => sum + li.total, 0);
   const tax = Math.round(lineItemsTotal * 0.07 * 100) / 100;
-  const grandTotal = Math.round((lineItemsTotal + tax) * 100) / 100;
+  const whtTotal = formData.lineItems.reduce((sum, li) => sum + (li.whtAmount || 0), 0);
+  const grandTotal = Math.round((lineItemsTotal + tax - whtTotal) * 100) / 100;
 
   function handleSubmit() {
     onSubmit({
@@ -200,7 +205,7 @@ export default function InvoiceReviewScreen({ invoice, onSubmit, onCancel }) {
                         </button>
                       )}
                     </div>
-                    <div className="grid grid-cols-3 gap-2 mt-2">
+                    <div className="grid grid-cols-5 gap-2 mt-2">
                       <div>
                         <label className="text-[10px] text-gray-400 uppercase font-semibold">
                           {t('invoices.quantity')}
@@ -245,6 +250,36 @@ export default function InvoiceReviewScreen({ invoice, onSubmit, onCancel }) {
                           {formatCurrency(item.total)}
                         </div>
                       </div>
+                      <div>
+                        <label className="text-[10px] text-gray-400 uppercase font-semibold">
+                          {t('invoices.whtRate')}
+                        </label>
+                        <select
+                          value={item.whtRate || 0}
+                          onChange={(e) =>
+                            handleLineItemChange(
+                              idx,
+                              'whtRate',
+                              parseFloat(e.target.value)
+                            )
+                          }
+                          className="w-full text-sm font-mono text-gray-800 bg-white border border-gray-200 rounded px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        >
+                          <option value={0}>0%</option>
+                          <option value={1}>1%</option>
+                          <option value={2}>2%</option>
+                          <option value={3}>3%</option>
+                          <option value={5}>5%</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-gray-400 uppercase font-semibold">
+                          {t('invoices.whtAmount')}
+                        </label>
+                        <div className="text-sm font-mono font-medium text-red-600 bg-gray-100 border border-gray-200 rounded px-2.5 py-1.5">
+                          {formatCurrency(item.whtAmount || 0)}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -266,6 +301,14 @@ export default function InvoiceReviewScreen({ invoice, onSubmit, onCancel }) {
                     {formatCurrency(tax)}
                   </span>
                 </div>
+                {whtTotal > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">{t('invoices.whtTotal')}</span>
+                    <span className="font-mono font-medium text-red-600">
+                      -{formatCurrency(whtTotal)}
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between text-sm font-bold pt-2 border-t border-gray-200">
                   <span>{t('invoices.totalAmount')}</span>
                   <span className="font-mono text-lg">

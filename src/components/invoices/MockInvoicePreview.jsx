@@ -4,7 +4,8 @@ export default function MockInvoicePreview({ invoice }) {
   if (!invoice) return null;
 
   const tax = Math.round(invoice.amount * 0.07 * 100) / 100;
-  const total = Math.round((invoice.amount + tax) * 100) / 100;
+  const whtTotal = (invoice.lineItems || []).reduce((sum, item) => sum + (item.whtAmount || 0), 0);
+  const total = Math.round((invoice.amount + tax - whtTotal) * 100) / 100;
 
   return (
     <div className="bg-white border border-gray-300 shadow-lg rounded-sm p-8 font-serif text-gray-800 max-w-[600px] mx-auto relative">
@@ -74,6 +75,8 @@ export default function MockInvoicePreview({ invoice }) {
               <th className="text-right py-2 font-semibold text-gray-700 w-16">Qty</th>
               <th className="text-right py-2 font-semibold text-gray-700 w-24">Unit Price</th>
               <th className="text-right py-2 font-semibold text-gray-700 w-24">Amount</th>
+              <th className="text-right py-2 font-semibold text-gray-700 w-16">WHT%</th>
+              <th className="text-right py-2 font-semibold text-gray-700 w-24">WHT</th>
             </tr>
           </thead>
           <tbody>
@@ -83,6 +86,8 @@ export default function MockInvoicePreview({ invoice }) {
                 <td className="py-2 text-right tabular-nums">{item.quantity}</td>
                 <td className="py-2 text-right tabular-nums">{formatCurrency(item.unitPrice)}</td>
                 <td className="py-2 text-right tabular-nums">{formatCurrency(item.total)}</td>
+                <td className="py-2 text-right tabular-nums">{item.whtRate != null ? `${item.whtRate}%` : '-'}</td>
+                <td className="py-2 text-right tabular-nums text-red-600">{item.whtAmount ? formatCurrency(item.whtAmount) : '-'}</td>
               </tr>
             ))}
           </tbody>
@@ -100,6 +105,12 @@ export default function MockInvoicePreview({ invoice }) {
             <span className="text-gray-500">Tax (7%)</span>
             <span className="tabular-nums">{formatCurrency(tax)}</span>
           </div>
+          {whtTotal > 0 && (
+            <div className="flex justify-between text-sm py-1">
+              <span className="text-gray-500">WHT Total</span>
+              <span className="tabular-nums text-red-600">-{formatCurrency(whtTotal)}</span>
+            </div>
+          )}
           <div className="flex justify-between text-sm py-2 border-t-2 border-gray-800 mt-1 font-bold">
             <span>Total Due</span>
             <span className="tabular-nums">{formatCurrency(total)}</span>

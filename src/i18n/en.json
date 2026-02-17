@@ -11,7 +11,7 @@
     "settings": "Settings"
   },
   "header": {
-    "search": "Search invoices, vendors...",
+    "search": "Search invoices, suppliers...",
     "notifications": "Notifications",
     "profile": "Admin User"
   },
@@ -24,7 +24,7 @@
     "totalSpend": "Total Spend",
     "invoiceVolume": "Invoice Volume by Month",
     "processingTime": "Processing Time Trend",
-    "spendByVendor": "Spend by Vendor",
+    "spendByVendor": "Spend by Supplier",
     "automationTrend": "Automation Rate Trend",
     "statusBreakdown": "Invoice Status Breakdown",
     "hours": "hours",
@@ -33,7 +33,7 @@
   "invoices": {
     "title": "Invoice Management",
     "invoiceNo": "Invoice #",
-    "vendor": "Vendor",
+    "vendor": "Supplier",
     "amount": "Amount",
     "date": "Date",
     "dueDate": "Due Date",
@@ -41,7 +41,7 @@
     "source": "Source",
     "poNumber": "PO Number",
     "filterByStatus": "Filter by Status",
-    "filterByVendor": "Filter by Vendor",
+    "filterByVendor": "Filter by Supplier",
     "filterBySource": "Filter by Source",
     "all": "All",
     "search": "Search invoices...",
@@ -72,7 +72,12 @@
     "submitForProcessing": "Submit for Processing",
     "addLineItem": "Add Line Item",
     "removeItem": "Remove",
-    "backToList": "Back to Invoice List"
+    "backToList": "Back to Invoice List",
+    "wht": "WHT",
+    "whtRate": "WHT%",
+    "whtAmount": "WHT Amount",
+    "whtTotal": "WHT Total",
+    "reviewAndResubmit": "Review & Resubmit"
   },
   "status": {
     "received": "Received",
@@ -140,8 +145,8 @@
     "feature1Desc": "Intelligent OCR for accurate data extraction from various invoice formats",
     "feature2": "Email-Based Invoice Capture",
     "feature2Desc": "Automated monitoring and processing of invoices received via email",
-    "feature3": "Vendor Self-Service Portal",
-    "feature3Desc": "Dedicated platform for vendors to upload invoices and track status",
+    "feature3": "Supplier Self-Service Portal",
+    "feature3Desc": "Dedicated platform for suppliers to upload invoices and track status",
     "feature4": "Real-Time Analytics Dashboard",
     "feature4Desc": "Interactive dashboards for comprehensive AP metrics and insights",
     "feature5": "ERP Integration",
