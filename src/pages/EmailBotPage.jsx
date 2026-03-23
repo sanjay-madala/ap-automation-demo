@@ -17,6 +17,7 @@ import {
 import { emailInbox } from '../data/mockData';
 import StatusBadge from '../components/common/StatusBadge';
 import { formatCurrency, formatDateTime, getRelativeTime } from '../utils/formatters';
+import { getWhtLabel } from '../data/whtCodes';
 
 // Map email status to pipeline step index (0-based)
 function getPipelineProgress(status) {
@@ -387,7 +388,7 @@ export default function EmailBotPage() {
                           <td className="px-4 py-2.5 text-sm text-gray-700 text-right font-mono">{item.quantity}</td>
                           <td className="px-4 py-2.5 text-sm text-gray-700 text-right font-mono">{formatCurrency(item.unitPrice)}</td>
                           <td className="px-4 py-2.5 text-sm text-gray-900 text-right font-mono font-medium">{formatCurrency(item.total)}</td>
-                          <td className="px-4 py-2.5 text-sm text-gray-700 text-right font-mono">{item.whtRate != null ? `${item.whtRate}%` : '-'}</td>
+                          <td className="px-4 py-2.5 text-sm text-gray-700 text-right font-mono">{item.whtCode ? getWhtLabel(item.whtCode) : (item.whtRate != null ? `${item.whtRate}%` : '-')}</td>
                           <td className="px-4 py-2.5 text-sm text-red-600 text-right font-mono">{item.whtAmount ? formatCurrency(item.whtAmount) : '-'}</td>
                         </tr>
                       ))}

@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Send, Plus, Trash2, Sparkles } from 'lucide-react';
 import MockInvoicePreview from './MockInvoicePreview';
 import { formatCurrency } from '../../utils/formatters';
+import { whtCodes, getWhtRate } from '../../data/whtCodes';
+import { taxCodes, getTaxRate } from '../../data/taxCodes';
 
 export default function InvoiceReviewScreen({ invoice, onSubmit, onCancel }) {
   const { t } = useTranslation();
@@ -13,6 +15,7 @@ export default function InvoiceReviewScreen({ invoice, onSubmit, onCancel }) {
     dueDate: invoice.dueDate,
     poNumber: invoice.poNumber,
     amount: invoice.amount,
+    taxCode: invoice.taxCode || 'V1',
     lineItems: invoice.lineItems.map((li) => ({ ...li })),
   });
 
@@ -30,7 +33,10 @@ export default function InvoiceReviewScreen({ invoice, onSubmit, onCancel }) {
         items[index].total =
           Math.round(items[index].quantity * items[index].unitPrice * 100) / 100;
       }
-      if (field === 'quantity' || field === 'unitPrice' || field === 'whtRate') {
+      if (field === 'whtCode') {
+        items[index].whtRate = getWhtRate(value);
+      }
+      if (field === 'quantity' || field === 'unitPrice' || field === 'whtCode') {
         const rate = items[index].whtRate || 0;
         items[index].whtAmount = Math.round(items[index].total * rate / 100 * 100) / 100;
       }
@@ -43,7 +49,7 @@ export default function InvoiceReviewScreen({ invoice, onSubmit, onCancel }) {
       ...prev,
       lineItems: [
         ...prev.lineItems,
-        { description: '', quantity: 1, unitPrice: 0, total: 0, whtRate: 3, whtAmount: 0 },
+        { description: '', quantity: 1, unitPrice: 0, total: 0, whtCode: '05', whtRate: 3, whtAmount: 0 },
       ],
     }));
   }
@@ -56,7 +62,8 @@ export default function InvoiceReviewScreen({ invoice, onSubmit, onCancel }) {
   }
 
   const lineItemsTotal = formData.lineItems.reduce((sum, li) => sum + li.total, 0);
-  const tax = Math.round(lineItemsTotal * 0.07 * 100) / 100;
+  const taxRate = getTaxRate(formData.taxCode);
+  const tax = Math.round(lineItemsTotal * taxRate / 100 * 100) / 100;
   const whtTotal = formData.lineItems.reduce((sum, li) => sum + (li.whtAmount || 0), 0);
   const grandTotal = Math.round((lineItemsTotal + tax - whtTotal) * 100) / 100;
 
@@ -68,20 +75,13 @@ export default function InvoiceReviewScreen({ invoice, onSubmit, onCancel }) {
       dueDate: formData.dueDate,
       poNumber: formData.poNumber,
       amount: lineItemsTotal,
+      taxCode: formData.taxCode,
       lineItems: formData.lineItems,
     });
   }
 
-  // Build a preview invoice that reflects current form edits
-  const previewInvoice = {
-    ...invoice,
-    vendorName: formData.vendorName,
-    date: formData.date,
-    dueDate: formData.dueDate,
-    poNumber: formData.poNumber,
-    amount: lineItemsTotal,
-    lineItems: formData.lineItems,
-  };
+  // Preview shows the original uploaded document — not affected by form edits
+  const previewInvoice = invoice;
 
   return (
     <div>
@@ -205,7 +205,7 @@ export default function InvoiceReviewScreen({ invoice, onSubmit, onCancel }) {
                         </button>
                       )}
                     </div>
-                    <div className="grid grid-cols-5 gap-2 mt-2">
+                    <div className="grid grid-cols-4 gap-2 mt-2">
                       <div>
                         <label className="text-[10px] text-gray-400 uppercase font-semibold">
                           {t('invoices.quantity')}
@@ -252,34 +252,35 @@ export default function InvoiceReviewScreen({ invoice, onSubmit, onCancel }) {
                       </div>
                       <div>
                         <label className="text-[10px] text-gray-400 uppercase font-semibold">
-                          {t('invoices.whtRate')}
-                        </label>
-                        <select
-                          value={item.whtRate || 0}
-                          onChange={(e) =>
-                            handleLineItemChange(
-                              idx,
-                              'whtRate',
-                              parseFloat(e.target.value)
-                            )
-                          }
-                          className="w-full text-sm font-mono text-gray-800 bg-white border border-gray-200 rounded px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                        >
-                          <option value={0}>0%</option>
-                          <option value={1}>1%</option>
-                          <option value={2}>2%</option>
-                          <option value={3}>3%</option>
-                          <option value={5}>5%</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="text-[10px] text-gray-400 uppercase font-semibold">
                           {t('invoices.whtAmount')}
                         </label>
                         <div className="text-sm font-mono font-medium text-red-600 bg-gray-100 border border-gray-200 rounded px-2.5 py-1.5">
                           {formatCurrency(item.whtAmount || 0)}
                         </div>
                       </div>
+                    </div>
+                    <div className="mt-2">
+                      <label className="text-[10px] text-gray-400 uppercase font-semibold">
+                        WHT Code
+                      </label>
+                      <select
+                        value={item.whtCode || ''}
+                        onChange={(e) =>
+                          handleLineItemChange(
+                            idx,
+                            'whtCode',
+                            e.target.value
+                          )
+                        }
+                        className="w-full text-sm text-gray-800 bg-white border border-gray-200 rounded px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      >
+                        <option value="">-- ไม่หัก WHT --</option>
+                        {whtCodes.map((w) => (
+                          <option key={w.code} value={w.code}>
+                            {w.code} - {w.description}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   </div>
                 ))}
@@ -295,8 +296,21 @@ export default function InvoiceReviewScreen({ invoice, onSubmit, onCancel }) {
                     {formatCurrency(lineItemsTotal)}
                   </span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">{t('invoices.tax')} (7%)</span>
+                <div className="flex justify-between items-center text-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-500">{t('invoices.tax')}</span>
+                    <select
+                      value={formData.taxCode}
+                      onChange={(e) => handleFieldChange('taxCode', e.target.value)}
+                      className="text-xs text-gray-800 bg-white border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    >
+                      {taxCodes.map((tc) => (
+                        <option key={tc.code} value={tc.code}>
+                          {tc.code} - {tc.rate}%
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                   <span className="font-mono font-medium">
                     {formatCurrency(tax)}
                   </span>

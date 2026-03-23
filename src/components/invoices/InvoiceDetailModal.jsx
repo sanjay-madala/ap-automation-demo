@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { X, CheckCircle, Loader, XCircle, Circle, RefreshCw } from 'lucide-react';
 import StatusBadge from '../common/StatusBadge';
 import { formatCurrency, formatDate, formatDateTime } from '../../utils/formatters';
+import { getWhtLabel } from '../../data/whtCodes';
+import { getTaxRate, getTaxLabel } from '../../data/taxCodes';
 
 const stepIconMap = {
   completed: { Icon: CheckCircle, color: 'text-green-500', bg: 'bg-green-100', line: 'bg-green-300' },
@@ -31,7 +33,8 @@ export default function InvoiceDetailModal({ invoice, onClose, isOpen, onReview 
   const lineItems = invoice.lineItems || [];
   const lineItemsTotal = lineItems.reduce((sum, item) => sum + item.total, 0);
   const whtTotal = lineItems.reduce((sum, item) => sum + (item.whtAmount || 0), 0);
-  const tax = Math.round(invoice.amount * 0.07 * 100) / 100;
+  const taxRate = invoice.taxCode ? getTaxRate(invoice.taxCode) : 7;
+  const tax = Math.round(invoice.amount * taxRate / 100 * 100) / 100;
   const total = Math.round((invoice.amount + tax - whtTotal) * 100) / 100;
   const confidencePct = Math.round(invoice.confidence * 100);
 
@@ -114,7 +117,7 @@ export default function InvoiceDetailModal({ invoice, onClose, isOpen, onReview 
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">{t('invoices.tax')} (7%)</span>
+                  <span className="text-gray-500">{invoice.taxCode ? getTaxLabel(invoice.taxCode) : `${t('invoices.tax')} (${taxRate}%)`}</span>
                   <span className="font-mono font-medium text-gray-900">
                     {formatCurrency(tax)}
                   </span>
@@ -218,7 +221,7 @@ export default function InvoiceDetailModal({ invoice, onClose, isOpen, onReview 
                         <td className="px-4 py-3 text-sm text-gray-700 text-right font-mono">{item.quantity}</td>
                         <td className="px-4 py-3 text-sm text-gray-700 text-right font-mono">{formatCurrency(item.unitPrice)}</td>
                         <td className="px-4 py-3 text-sm text-gray-900 text-right font-mono font-medium">{formatCurrency(item.total)}</td>
-                        <td className="px-4 py-3 text-sm text-gray-700 text-right font-mono">{item.whtRate != null ? `${item.whtRate}%` : '-'}</td>
+                        <td className="px-4 py-3 text-sm text-gray-700 text-right font-mono">{item.whtCode ? getWhtLabel(item.whtCode) : (item.whtRate != null ? `${item.whtRate}%` : '-')}</td>
                         <td className="px-4 py-3 text-sm text-red-600 text-right font-mono">{item.whtAmount ? formatCurrency(item.whtAmount) : '-'}</td>
                       </tr>
                     ))}

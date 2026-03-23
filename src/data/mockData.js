@@ -1,6 +1,7 @@
 // =============================================================================
 // AP Invoice Automation Demo — Mock Data
 // =============================================================================
+import { getWhtRate } from './whtCodes';
 
 // ---------------------------------------------------------------------------
 // VENDORS
@@ -320,23 +321,25 @@ const lineItemTemplates = {
   ],
 };
 
-// WHT rates by vendor ID (common Thai WHT rates)
-const vendorWhtRates = {
-  V001: 3, // Office Supplies — service/goods
-  V002: 3, // IT Services
-  V003: 1, // Raw Materials — goods
-  V004: 3, // Manufacturing — service
-  V005: 1, // Raw Materials — goods
-  V006: 3, // Manufacturing — service
-  V007: 3, // Office Supplies — service/goods
-  V008: 3, // Logistics — service
-  V009: 3, // Energy — service
-  V010: 1, // Chemicals — goods
+// WHT codes by vendor ID (common Thai WHT codes)
+const vendorWhtCodes = {
+  V001: '05', // Office Supplies — ค่าจ้างทำของ 3%
+  V002: '09', // IT Services — ค่าบริการ 3%
+  V003: '01', // Raw Materials — ค่าขนส่ง 1%
+  V004: '05', // Manufacturing — ค่าจ้างทำของ 3%
+  V005: '01', // Raw Materials — ค่าขนส่ง 1%
+  V006: '05', // Manufacturing — ค่าจ้างทำของ 3%
+  V007: '05', // Office Supplies — ค่าจ้างทำของ 3%
+  V008: '01', // Logistics — ค่าขนส่ง 1%
+  V009: '09', // Energy — ค่าบริการ 3%
+  V010: '01', // Chemicals — ค่าขนส่ง 1%
 };
+
 
 export function generateLineItems(vendorId, totalAmount) {
   const templates = lineItemTemplates[vendorId] || lineItemTemplates['V001'];
-  const whtRate = vendorWhtRates[vendorId] || 3;
+  const whtCode = vendorWhtCodes[vendorId] || '05';
+  const whtRate = getWhtRate(whtCode);
   const items = [];
   let remaining = totalAmount;
   const count = 2 + Math.floor(Math.random() * 3); // 2 to 4 line items
@@ -349,7 +352,6 @@ export function generateLineItems(vendorId, totalAmount) {
     const lineTotal = Math.round(quantity * template.unitPrice * 100) / 100;
 
     if (isLast) {
-      // Adjust last item to make totals match
       const adjustedQuantity = Math.max(1, Math.round(remaining / template.unitPrice));
       const adjustedTotal = Math.round(adjustedQuantity * template.unitPrice * 100) / 100;
       const whtAmount = Math.round(adjustedTotal * whtRate / 100 * 100) / 100;
@@ -358,6 +360,7 @@ export function generateLineItems(vendorId, totalAmount) {
         quantity: adjustedQuantity,
         unitPrice: template.unitPrice,
         total: adjustedTotal,
+        whtCode,
         whtRate,
         whtAmount,
       });
@@ -368,6 +371,7 @@ export function generateLineItems(vendorId, totalAmount) {
         quantity,
         unitPrice: template.unitPrice,
         total: lineTotal,
+        whtCode,
         whtRate,
         whtAmount,
       });
